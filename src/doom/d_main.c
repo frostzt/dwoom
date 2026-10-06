@@ -476,11 +476,9 @@ void D_DoomLoop(void)
         wipegamestate = gamestate;
     }
 
-    // the core main loop this keeps going forever
-    while (1)
-    {
-        D_RunFrame();
-    }
+    // I have no idea what's gonna happen now but we can't block threads
+    // on worker, there used be a `while(1) { D_RunFrame(); }` here.
+    D_RunFrame();
 }
 
 
