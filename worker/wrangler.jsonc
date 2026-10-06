@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "doom-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+
+  // public/index.html is the browser client; everything else hits the Worker.
+  "assets": { "directory": "./public" },
+
+  "durable_objects": {
+    "bindings": [{ "name": "DOOM", "class_name": "DoomRoom" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DoomRoom"] }],
+
+  // *.wasm is bundled as a WebAssembly.Module by default; the IWAD is
+  // bundled as raw bytes (ArrayBuffer).
+  "rules": [{ "type": "Data", "globs": ["**/*.WAD", "**/*.wad"], "fallthrough": true }],
+
+  "observability": { "enabled": true }
+}

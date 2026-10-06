@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Doom on Workers</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-content: center;
+      gap: 12px;
+      background: #111;
+      color: #bbb;
+      font: 14px/1.4 ui-monospace, monospace;
+    }
+    canvas {
+      width: min(960px, calc(100vw - 32px));
+      aspect-ratio: 320 / 240; /* Doom's 320x200 was shown on 4:3 screens */
+      image-rendering: pixelated;
+      background: #000;
+    }
+    #status { display: flex; justify-content: space-between; }
+    kbd { color: #eee; }
+  </style>
+</head>
+<body>
+  <canvas id="screen" width="320" height="200"></canvas>
+  <div id="status"><span id="conn">connecting…</span><span id="fps"></span></div>
+  <div>
+    <kbd>Arrows/WASD</kbd> move · <kbd>Ctrl/F</kbd> fire · <kbd>Space/E</kbd> use ·
+    <kbd>Enter</kbd> select · <kbd>Esc</kbd> menu
+  </div>
+
+  <script>
+    // Must match the BIT_* defines in src/i_main.c.
+    const KEY_BITS = {
+      ArrowUp: 1 << 0, KeyW: 1 << 0,
+      ArrowDown: 1 << 1, KeyS: 1 << 1,
+      ArrowLeft: 1 << 2, KeyA: 1 << 2,
+      ArrowRight: 1 << 3, KeyD: 1 << 3,
+      ControlLeft: 1 << 4, ControlRight: 1 << 4, KeyF: 1 << 4,
+      Space: 1 << 5, KeyE: 1 << 5,
+      Enter: 1 << 6,
+      Escape: 1 << 7,
+    };
+
+    const canvas = document.getElementById('screen');
+    const ctx = canvas.getContext('2d');
+    const image = ctx.createImageData(320, 200);
+    const pixels = new Uint32Array(image.data.buffer);
+    const lut = new Uint32Array(256);
+    const conn = document.getElementById('conn');
+    const fpsLabel = document.getElementById('fps');
+
+    let ws;
+    let mask = 0;
+    let frames = 0;
+
+    function connect() {
+      const room = new URLSearchParams(location.search).get('room') ?? 'default';
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${proto}//${location.host}/ws?room=${encodeURIComponent(room)}`);
+      ws.binaryType = 'arraybuffer';
+
+      ws.onopen = () => { conn.textContent = `connected · room "${room}"`; send(); };
+      ws.onclose = (e) => {
+        conn.textContent = `disconnected${e.reason ? ` (${e.reason})` : ''} · retrying…`;
+        setTimeout(connect, 2000);
+      };
+      ws.onmessage = ({ data }) => {
+        const bytes = new Uint8Array(data);
+        if (bytes.length === 768) {
+          // PLAYPAL: 256 RGB triplets -> little-endian RGBA words
+          for (let i = 0; i < 256; i++) {
+            lut[i] = 0xff000000 | (bytes[i * 3 + 2] << 16) | (bytes[i * 3 + 1] << 8) | bytes[i * 3];
+          }
+        } else if (bytes.length === 320 * 200) {
+          for (let i = 0; i < bytes.length; i++) pixels[i] = lut[bytes[i]];
+          ctx.putImageData(image, 0, 0);
+          frames++;
+        }
+      };
+    }
+
+    function send() {
+      if (ws?.readyState === WebSocket.OPEN) ws.send(String(mask));
+    }
+
+    function onKey(e, down) {
+      const bit = KEY_BITS[e.code];
+      if (bit === undefined) return;
+      e.preventDefault();
+      const next = down ? mask | bit : mask & ~bit;
+      if (next !== mask) { mask = next; send(); }
+    }
+
+    addEventListener('keydown', (e) => onKey(e, true));
+    addEventListener('keyup', (e) => onKey(e, false));
+    addEventListener('blur', () => { mask = 0; send(); });
+
+    setInterval(() => { fpsLabel.textContent = `${frames} fps`; frames = 0; }, 1000);
+
+    connect();
+  </script>
+</body>
+</html>
