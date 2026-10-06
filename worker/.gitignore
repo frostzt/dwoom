@@ -1,5 +1,2 @@
 node_modules/
 .wrangler/
-src/doom.wasm
-src/*.WAD
-src/*.wad
