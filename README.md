@@ -5,6 +5,11 @@ Also note that this is derived out of [Chocolate Doom](https://github.com/chocol
 and therefore the code which is NOT modified belongs fully to the
 authors. Pretty cool repo and people do check it out.
 
+## About WAD files
+
+The file that exists in `/worker/src/DOOM1.WAD` is a free version
+and is freely redistributable that I got from [DOOM World](https://www.doomworld.com/idgames/idstuff/doom/win95/doom95)
+
 ## Why are you doing this?
 
 It is 11:30 PM and I am not feeling like playing any video games
