@@ -43,6 +43,8 @@
 #define BIT_RIGHT (1 << 3)
 #define BIT_FIRE  (1 << 4)
 #define BIT_USE   (1 << 5)
+#define BIT_ENTER (1 << 6)
+#define BIT_ESC   (1 << 7)
 
 //
 // D_DoomMain()
@@ -52,11 +54,9 @@
 extern void D_ProcessEvents(void);
 extern boolean D_Display(void);
 extern void G_Ticker(void);
+extern void D_RunFrame(void);
 
 void D_DoomMain(void);
-
-// This too is not globally visible
-// void D_Display(void);
 
 static char *default_argv[] = {"doom", "-iwad", "DOOM1.WAD", NULL};
 static int default_argc = 3;
@@ -123,11 +123,19 @@ void worker_doom_tick(int input_mask)
         post_key('e', input_mask & BIT_USE);
     }
 
+    if (changed & BIT_ENTER)
+    {
+        post_key(KEY_ENTER, input_mask & BIT_ENTER);
+    }
+
+    if (changed & BIT_ESC)
+    {
+        post_key(KEY_ESCAPE, input_mask & BIT_ESC);
+    }
+
     last_mask = input_mask;
 
-    D_ProcessEvents();
-    G_Ticker();
-    D_Display();
+    D_RunFrame();
 }
 
 
