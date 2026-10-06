@@ -19,6 +19,8 @@
 #include "config.h"
 
 #include <assert.h>
+#include <emscripten/em_macros.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -26,6 +28,7 @@
 
 #include "doomtype.h"
 #include "i_system.h"
+#include "i_video.h"
 #include "m_argv.h"
 #include "m_misc.h"
 
@@ -36,44 +39,71 @@
 // calls all startup code, parses command line options.
 //
 
-void D_DoomMain (void);
+void D_DoomMain(void);
 
-int main(int argc, char **argv)
+static char *default_argv[] = {"doom", "-iwad", "DOOM1.WAD", NULL};
+static int default_argc = 3;
+
+EMSCRIPTEN_KEEPALIVE
+int worker_doom_init(void)
 {
-    // save arguments
+    myargc = default_argc;
+    myargv = default_argv;
 
-    myargc = argc;
-    myargv = malloc(argc * sizeof(char *));
-    assert(myargv != NULL);
-
-    for (int i = 0; i < argc; i++)
-    {
-        myargv[i] = M_StringDuplicate(argv[i]);
-    }
-
-    //!
-    // Print the program version and exit.
-    //
-    if (M_ParmExists("-version") || M_ParmExists("--version")) {
-        puts(PACKAGE_STRING);
-        exit(0);
-    }
-
-#if defined(_WIN32)
-    // compose a proper command line from loose file paths passed as arguments
-    // to allow for loading WADs and DEHACKED patches by drag-and-drop
-    M_AddLooseFiles();
-#endif
-
-    M_FindResponseFile();
-    M_SetExeDir();
-
-    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
-
-    // start doom
-
-    D_DoomMain ();
+    D_DoomMain();
 
     return 0;
 }
 
+EMSCRIPTEN_KEEPALIVE
+uint8_t *worker_get_framebuffer(void)
+{
+    return I_VideoBuffer;
+}
+
+EMSCRIPTEN_KEEPALIVE
+void worker_doom_tick(int input_mask)
+{
+}
+
+
+// int main(int argc, char **argv)
+// {
+//     // save arguments
+//
+//     myargc = argc;
+//     myargv = malloc(argc * sizeof(char *));
+//     assert(myargv != NULL);
+//
+//     for (int i = 0; i < argc; i++)
+//     {
+//         myargv[i] = M_StringDuplicate(argv[i]);
+//     }
+//
+//     //!
+//     // Print the program version and exit.
+//     //
+//     if (M_ParmExists("-version") || M_ParmExists("--version"))
+//     {
+//         puts(PACKAGE_STRING);
+//         exit(0);
+//     }
+//
+// #if defined(_WIN32)
+//     // compose a proper command line from loose file paths passed as arguments
+//     // to allow for loading WADs and DEHACKED patches by drag-and-drop
+//     M_AddLooseFiles();
+// #endif
+//
+//     M_FindResponseFile();
+//     M_SetExeDir();
+//
+//     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
+//
+//     // start doom
+//
+//     D_DoomMain();
+//
+//
+//     return 0;
+// }
