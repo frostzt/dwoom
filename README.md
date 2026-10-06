@@ -1,6 +1,9 @@
 # Dwoom
 
 Having fun with Doom, kinda trying to port it directly into workers.
+Also note that this is derived out of [Chocolate Doom](https://github.com/chocolate-doom/)
+and therefore the code which is NOT modified belongs fully to the
+authors. Pretty cool repo and people do check it out.
 
 ## Why are you doing this?
 
