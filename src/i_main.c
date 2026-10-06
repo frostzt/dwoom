@@ -115,12 +115,12 @@ void worker_doom_tick(int input_mask)
 
     if (changed & BIT_FIRE)
     {
-        post_key(KEY_LCTRL, input_mask & BIT_FIRE);
+        post_key(KEY_RCTRL, input_mask & BIT_FIRE);
     }
 
     if (changed & BIT_USE)
     {
-        post_key('e', input_mask & BIT_USE);
+        post_key(' ', input_mask & BIT_USE);
     }
 
     if (changed & BIT_ENTER)
